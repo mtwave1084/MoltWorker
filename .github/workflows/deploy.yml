@@ -28,10 +28,7 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-          secrets: |
-            BASIC_AUTH_USER
-            BASIC_AUTH_PASS
+          command: deploy --var BASIC_AUTH_USER:${{ secrets.BASIC_AUTH_USER }} --var BASIC_AUTH_PASS:${{ secrets.BASIC_AUTH_PASS }}
         env:
           CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
           CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
