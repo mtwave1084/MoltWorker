@@ -61,14 +61,13 @@ function validateRequiredEnv(env: MoltbotEnv): string[] {
     missing.push('MOLTBOT_GATEWAY_TOKEN');
   }
 
-  // CF Access vars not required in dev/test mode since auth is skipped
+  // CF Access vars OR Basic Auth required in production (unless dev/test mode)
   if (!isTestMode) {
-    if (!env.CF_ACCESS_TEAM_DOMAIN) {
-      missing.push('CF_ACCESS_TEAM_DOMAIN');
-    }
+    const hasCFAccess = env.CF_ACCESS_TEAM_DOMAIN && env.CF_ACCESS_AUD;
+    const hasBasicAuth = env.BASIC_AUTH_USER && env.BASIC_AUTH_PASS;
 
-    if (!env.CF_ACCESS_AUD) {
-      missing.push('CF_ACCESS_AUD');
+    if (!hasCFAccess && !hasBasicAuth) {
+      missing.push('Authentication Config (CF_ACCESS_* or BASIC_AUTH_*)');
     }
   }
 
