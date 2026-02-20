@@ -237,7 +237,6 @@ if (isOpenAI) {
     config.models.providers = config.models.providers || {};
     config.models.providers.openai = {
         baseUrl: baseUrl,
-        api: 'openai-chat',
         models: [
             { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', contextWindow: 1048576 },
             { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', contextWindow: 2097152 },
