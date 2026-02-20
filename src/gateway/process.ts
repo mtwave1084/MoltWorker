@@ -16,13 +16,13 @@ export async function findExistingMoltbotProcess(sandbox: Sandbox): Promise<Proc
     for (const proc of processes) {
       // Only match the gateway process, not CLI commands like "clawdbot devices list"
       // Note: CLI is still named "clawdbot" until upstream renames it
-      const isGatewayProcess = 
+      const isGatewayProcess =
         proc.command.includes('start-moltbot.sh') ||
         proc.command.includes('clawdbot gateway');
-      const isCliCommand = 
+      const isCliCommand =
         proc.command.includes('clawdbot devices') ||
         proc.command.includes('clawdbot --version');
-      
+
       if (isGatewayProcess && !isCliCommand) {
         if (proc.status === 'starting' || proc.status === 'running') {
           return proc;
@@ -79,7 +79,8 @@ export async function ensureMoltbotGateway(sandbox: Sandbox, env: MoltbotEnv): P
   // Start a new Moltbot gateway
   console.log('Starting new Moltbot gateway...');
   const envVars = buildEnvVars(env);
-  const command = '/usr/local/bin/start-moltbot.sh';
+  // Wrap command to capture all output to a log file for debugging
+  const command = 'bash -c "/usr/local/bin/start-moltbot.sh > /tmp/moltbot-startup.log 2>&1"';
 
   console.log('Starting process with command:', command);
   console.log('Environment vars being passed:', Object.keys(envVars));
@@ -106,19 +107,26 @@ export async function ensureMoltbotGateway(sandbox: Sandbox, env: MoltbotEnv): P
     if (logs.stderr) console.log('[Gateway] stderr:', logs.stderr);
   } catch (e) {
     console.error('[Gateway] waitForPort failed:', e);
+    // Read the log file via a separate process (more reliable than getLogs on crashed processes)
     try {
-      const logs = await process.getLogs();
-      console.error('[Gateway] startup failed. Stderr:', logs.stderr);
-      console.error('[Gateway] startup failed. Stdout:', logs.stdout);
-      throw new Error(`Moltbot gateway failed to start. Stderr: ${logs.stderr || '(empty)'}`);
+      const readLog = await sandbox.startProcess('cat /tmp/moltbot-startup.log', {});
+      // Wait a moment for cat to finish
+      await new Promise(r => setTimeout(r, 3000));
+      const logContent = await readLog.getLogs();
+      const fullLog = logContent.stdout || logContent.stderr || '(no log output)';
+      console.error('[Gateway] startup log from file:', fullLog);
+      throw new Error(`Moltbot gateway failed to start. Log: ${fullLog}`);
     } catch (logErr) {
-      console.error('[Gateway] Failed to get logs:', logErr);
+      if (logErr instanceof Error && logErr.message.startsWith('Moltbot gateway failed')) {
+        throw logErr;
+      }
+      console.error('[Gateway] Failed to read log file:', logErr);
       throw e;
     }
   }
 
   // Verify gateway is actually responding
   console.log('[Gateway] Verifying gateway health...');
-  
+
   return process;
 }
