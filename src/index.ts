@@ -57,9 +57,8 @@ function validateRequiredEnv(env: MoltbotEnv): string[] {
   const missing: string[] = [];
   const isTestMode = env.DEV_MODE === 'true' || env.E2E_TEST_MODE === 'true';
 
-  if (!env.MOLTBOT_GATEWAY_TOKEN) {
-    missing.push('MOLTBOT_GATEWAY_TOKEN');
-  }
+  // MOLTBOT_GATEWAY_TOKEN is optional when Basic Auth is configured
+  // (Basic Auth already protects the Worker, so gateway token is redundant)
 
   // CF Access vars OR Basic Auth required in production (unless dev/test mode)
   if (!isTestMode) {
