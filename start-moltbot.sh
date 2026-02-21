@@ -8,6 +8,9 @@
 
 set -e
 
+# Redirect all output to log file for debugging (inherited by exec'd gateway process)
+exec > /tmp/moltbot-startup.log 2>&1
+
 # Check if clawdbot gateway is already running - bail early if so
 # Note: CLI is still named "clawdbot" until upstream renames it
 if pgrep -f "clawdbot gateway" > /dev/null 2>&1; then
@@ -163,6 +166,16 @@ if (config.models?.providers?.anthropic?.models) {
     }
 }
 
+// Clean up invalid 'api' fields from provider configs (not supported by this clawdbot version)
+if (config.models?.providers?.openai?.api) {
+    console.log('Removing invalid api field from openai provider config');
+    delete config.models.providers.openai.api;
+}
+if (config.models?.providers?.anthropic?.api) {
+    console.log('Removing invalid api field from anthropic provider config');
+    delete config.models.providers.anthropic.api;
+}
+
 
 
 // Gateway configuration
@@ -255,7 +268,6 @@ if (isOpenAI) {
     config.models.providers = config.models.providers || {};
     const providerConfig = {
         baseUrl: baseUrl,
-        api: 'anthropic-messages',
         models: [
             { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', contextWindow: 200000 },
             { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', contextWindow: 200000 },

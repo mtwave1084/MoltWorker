@@ -79,8 +79,7 @@ export async function ensureMoltbotGateway(sandbox: Sandbox, env: MoltbotEnv): P
   // Start a new Moltbot gateway
   console.log('Starting new Moltbot gateway...');
   const envVars = buildEnvVars(env);
-  // Wrap command to capture all output to a log file for debugging
-  const command = 'bash -c "/usr/local/bin/start-moltbot.sh > /tmp/moltbot-startup.log 2>&1"';
+  const command = '/usr/local/bin/start-moltbot.sh';
 
   console.log('Starting process with command:', command);
   console.log('Environment vars being passed:', Object.keys(envVars));
