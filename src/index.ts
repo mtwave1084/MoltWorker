@@ -47,6 +47,17 @@ function transformErrorMessage(message: string, host: string): string {
   return message;
 }
 
+/**
+ * Inject gateway token into a request URL for internal Worker→Gateway auth.
+ * The browser never sees this token — Basic Auth protects the external layer.
+ */
+function injectGatewayToken(request: Request, token: string | undefined): Request {
+  if (!token) return request;
+  const url = new URL(request.url);
+  url.searchParams.set('token', token);
+  return new Request(url.toString(), request);
+}
+
 export { Sandbox };
 
 /**
@@ -277,7 +288,8 @@ app.all('*', async (c) => {
     }
 
     // Get WebSocket connection to the container
-    const containerResponse = await sandbox.wsConnect(request, MOLTBOT_PORT);
+    const proxyRequest = injectGatewayToken(request, c.env.MOLTBOT_GATEWAY_TOKEN);
+    const containerResponse = await sandbox.wsConnect(proxyRequest, MOLTBOT_PORT);
     console.log('[WS] wsConnect response status:', containerResponse.status);
 
     // Get the container-side WebSocket
@@ -398,7 +410,8 @@ app.all('*', async (c) => {
   }
 
   console.log('[HTTP] Proxying:', url.pathname + url.search);
-  const httpResponse = await sandbox.containerFetch(request, MOLTBOT_PORT);
+  const proxyRequest = injectGatewayToken(request, c.env.MOLTBOT_GATEWAY_TOKEN);
+  const httpResponse = await sandbox.containerFetch(proxyRequest, MOLTBOT_PORT);
   console.log('[HTTP] Response status:', httpResponse.status);
 
   // Add debug header to verify worker handled the request
