@@ -234,13 +234,21 @@ app.all('*', async (c) => {
 
   console.log('[PROXY] Handling request:', url.pathname);
 
+  // For browser HTML requests: inject the gateway token into the URL
+  // The SPA reads ?token= from the URL and uses it for WebSocket connections
+  // This is safe because Basic Auth already protects the entire Worker
+  const isWebSocketRequest = request.headers.get('Upgrade')?.toLowerCase() === 'websocket';
+  const acceptsHtml = request.headers.get('Accept')?.includes('text/html');
+
+  if (acceptsHtml && !isWebSocketRequest && c.env.MOLTBOT_GATEWAY_TOKEN && !url.searchParams.has('token')) {
+    const redirectUrl = new URL(url.toString());
+    redirectUrl.searchParams.set('token', c.env.MOLTBOT_GATEWAY_TOKEN);
+    return c.redirect(redirectUrl.toString());
+  }
+
   // Check if gateway is already running
   const existingProcess = await findExistingMoltbotProcess(sandbox);
   const isGatewayReady = existingProcess !== null && existingProcess.status === 'running';
-
-  // For browser requests (non-WebSocket, non-API), show loading page if gateway isn't ready
-  const isWebSocketRequest = request.headers.get('Upgrade')?.toLowerCase() === 'websocket';
-  const acceptsHtml = request.headers.get('Accept')?.includes('text/html');
 
   if (!isGatewayReady && !isWebSocketRequest && acceptsHtml) {
     console.log('[PROXY] Gateway not ready, serving loading page');
