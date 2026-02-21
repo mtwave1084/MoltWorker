@@ -8,9 +8,6 @@
 
 set -e
 
-# Redirect all output to log file for debugging (inherited by exec'd gateway process)
-exec > /tmp/moltbot-startup.log 2>&1
-
 # Check if clawdbot gateway is already running - bail early if so
 # Note: CLI is still named "clawdbot" until upstream renames it
 if pgrep -f "clawdbot gateway" > /dev/null 2>&1; then
@@ -136,6 +133,9 @@ fi
 # ============================================================
 # UPDATE CONFIG FROM ENVIRONMENT VARIABLES
 # ============================================================
+# Always start with a fresh config to avoid stale/invalid fields from previous runs
+# (R2 restore above provides the baseline, but we regenerate the config from env vars)
+rm -f "$CONFIG_FILE"
 node << EOFNODE
 const fs = require('fs');
 

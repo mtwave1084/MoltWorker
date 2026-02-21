@@ -106,20 +106,16 @@ export async function ensureMoltbotGateway(sandbox: Sandbox, env: MoltbotEnv): P
     if (logs.stderr) console.log('[Gateway] stderr:', logs.stderr);
   } catch (e) {
     console.error('[Gateway] waitForPort failed:', e);
-    // Read the log file via a separate process (more reliable than getLogs on crashed processes)
     try {
-      const readLog = await sandbox.startProcess('cat /tmp/moltbot-startup.log', {});
-      // Wait a moment for cat to finish
-      await new Promise(r => setTimeout(r, 3000));
-      const logContent = await readLog.getLogs();
-      const fullLog = logContent.stdout || logContent.stderr || '(no log output)';
-      console.error('[Gateway] startup log from file:', fullLog);
-      throw new Error(`Moltbot gateway failed to start. Log: ${fullLog}`);
+      const logs = await process.getLogs();
+      const logOutput = logs.stderr || logs.stdout || '(no log output)';
+      console.error('[Gateway] startup failed. Output:', logOutput);
+      throw new Error(`Moltbot gateway failed to start. Output: ${logOutput}`);
     } catch (logErr) {
       if (logErr instanceof Error && logErr.message.startsWith('Moltbot gateway failed')) {
         throw logErr;
       }
-      console.error('[Gateway] Failed to read log file:', logErr);
+      console.error('[Gateway] Failed to get logs:', logErr);
       throw e;
     }
   }
