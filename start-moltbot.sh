@@ -307,6 +307,20 @@ EOFNODE
 echo "Starting Moltbot Gateway..."
 echo "Gateway will be available on port 18789"
 
+# Test API connectivity from inside the container
+if [ -n "$OPENAI_API_KEY" ] && [ -n "$OPENAI_BASE_URL" ]; then
+    echo "=== API Connectivity Test ===" | tee /tmp/api-test.log
+    echo "OPENAI_BASE_URL: $OPENAI_BASE_URL" | tee -a /tmp/api-test.log
+    echo "Testing Chat Completions endpoint..." | tee -a /tmp/api-test.log
+    API_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+        -H "Authorization: Bearer $OPENAI_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d '{"model":"gemini-2.0-flash","messages":[{"role":"user","content":"Say hi"}],"max_tokens":10}' \
+        "$OPENAI_BASE_URL/chat/completions" --max-time 10 2>&1)
+    echo "Response: $API_RESPONSE" | tee -a /tmp/api-test.log
+    echo "=== End API Test ===" | tee -a /tmp/api-test.log
+fi
+
 # Clean up stale lock files
 rm -f /tmp/clawdbot-gateway.lock 2>/dev/null || true
 rm -f "$CONFIG_DIR/gateway.lock" 2>/dev/null || true
