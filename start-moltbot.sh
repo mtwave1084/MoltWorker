@@ -243,25 +243,29 @@ const baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.ANTHROPIC_BASE_U
 const isOpenAI = baseUrl.endsWith('/openai');
 
 if (isOpenAI) {
-    // Create custom openai provider config with baseUrl override
-    // Omit apiKey so moltbot falls back to OPENAI_API_KEY env var
+    // Create custom openai provider config with baseUrl and apiKey
     console.log('Configuring OpenAI provider with base URL:', baseUrl);
     config.models = config.models || {};
     config.models.providers = config.models.providers || {};
-    config.models.providers.openai = {
+    const openaiConfig = {
         baseUrl: baseUrl,
         models: [
+            { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', contextWindow: 1048576 },
             { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', contextWindow: 1048576 },
-            { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', contextWindow: 2097152 },
-            { id: 'gpt-4o', name: 'GPT-4o', contextWindow: 128000 },
+            { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', contextWindow: 1048576 },
         ]
     };
+    // Include API key in provider config (required for custom baseUrl)
+    if (process.env.OPENAI_API_KEY) {
+        openaiConfig.apiKey = process.env.OPENAI_API_KEY;
+    }
+    config.models.providers.openai = openaiConfig;
     // Add models to the allowlist so they appear in /models
     config.agents.defaults.models = config.agents.defaults.models || {};
-    config.agents.defaults.models['openai/gemini-2.0-flash'] = { alias: 'Gemini Flash' };
-    config.agents.defaults.models['openai/gemini-1.5-pro'] = { alias: 'Gemini Pro' };
-    config.agents.defaults.models['openai/gpt-4o'] = { alias: 'GPT-4o' };
-    config.agents.defaults.model.primary = 'openai/gemini-2.0-flash';
+    config.agents.defaults.models['openai/gemini-2.5-flash'] = { alias: 'Gemini 2.5 Flash' };
+    config.agents.defaults.models['openai/gemini-2.0-flash'] = { alias: 'Gemini 2.0 Flash' };
+    config.agents.defaults.models['openai/gemini-2.5-pro'] = { alias: 'Gemini 2.5 Pro' };
+    config.agents.defaults.model.primary = 'openai/gemini-2.5-flash';
 } else if (baseUrl) {
     console.log('Configuring Anthropic provider with base URL:', baseUrl);
     config.models = config.models || {};
