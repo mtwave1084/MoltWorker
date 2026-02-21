@@ -251,7 +251,6 @@ if (isOpenAI) {
         baseUrl: baseUrl,
         models: [
             { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', contextWindow: 1048576 },
-            { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', contextWindow: 1048576 },
             { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', contextWindow: 1048576 },
         ]
     };
@@ -263,7 +262,6 @@ if (isOpenAI) {
     // Add models to the allowlist so they appear in /models
     config.agents.defaults.models = config.agents.defaults.models || {};
     config.agents.defaults.models['openai/gemini-2.5-flash'] = { alias: 'Gemini 2.5 Flash' };
-    config.agents.defaults.models['openai/gemini-2.0-flash'] = { alias: 'Gemini 2.0 Flash' };
     config.agents.defaults.models['openai/gemini-2.5-pro'] = { alias: 'Gemini 2.5 Pro' };
     config.agents.defaults.model.primary = 'openai/gemini-2.5-flash';
 } else if (baseUrl) {
@@ -319,14 +317,14 @@ if [ -n "$OPENAI_API_KEY" ] && [ -n "$OPENAI_BASE_URL" ]; then
     RESP1=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
         -H "Authorization: Bearer $OPENAI_API_KEY" \
         -H "Content-Type: application/json" \
-        -d '{"model":"gemini-2.0-flash","messages":[{"role":"user","content":"Say hi"}],"max_tokens":10}' \
+        -d '{"model":"gemini-2.5-flash","messages":[{"role":"user","content":"Say hi"}],"max_tokens":10}' \
         "$FULL_URL" --max-time 10 2>&1)
     echo "Response: $RESP1" | tee -a /tmp/api-test.log
 
     echo "--- Test 2: key= query param auth ---" | tee -a /tmp/api-test.log
     RESP2=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
         -H "Content-Type: application/json" \
-        -d '{"model":"gemini-2.0-flash","messages":[{"role":"user","content":"Say hi"}],"max_tokens":10}' \
+        -d '{"model":"gemini-2.5-flash","messages":[{"role":"user","content":"Say hi"}],"max_tokens":10}' \
         "$FULL_URL?key=$OPENAI_API_KEY" --max-time 10 2>&1)
     echo "Response: $RESP2" | tee -a /tmp/api-test.log
 
