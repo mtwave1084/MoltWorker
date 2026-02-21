@@ -310,14 +310,29 @@ echo "Gateway will be available on port 18789"
 # Test API connectivity from inside the container
 if [ -n "$OPENAI_API_KEY" ] && [ -n "$OPENAI_BASE_URL" ]; then
     echo "=== API Connectivity Test ===" | tee /tmp/api-test.log
+    FULL_URL="$OPENAI_BASE_URL/chat/completions"
     echo "OPENAI_BASE_URL: $OPENAI_BASE_URL" | tee -a /tmp/api-test.log
-    echo "Testing Chat Completions endpoint..." | tee -a /tmp/api-test.log
-    API_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+    echo "Full URL: $FULL_URL" | tee -a /tmp/api-test.log
+    echo "OPENAI_API_KEY length: ${#OPENAI_API_KEY}" | tee -a /tmp/api-test.log
+
+    echo "--- Test 1: Bearer token auth ---" | tee -a /tmp/api-test.log
+    RESP1=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
         -H "Authorization: Bearer $OPENAI_API_KEY" \
         -H "Content-Type: application/json" \
         -d '{"model":"gemini-2.0-flash","messages":[{"role":"user","content":"Say hi"}],"max_tokens":10}' \
-        "$OPENAI_BASE_URL/chat/completions" --max-time 10 2>&1)
-    echo "Response: $API_RESPONSE" | tee -a /tmp/api-test.log
+        "$FULL_URL" --max-time 10 2>&1)
+    echo "Response: $RESP1" | tee -a /tmp/api-test.log
+
+    echo "--- Test 2: key= query param auth ---" | tee -a /tmp/api-test.log
+    RESP2=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+        -H "Content-Type: application/json" \
+        -d '{"model":"gemini-2.0-flash","messages":[{"role":"user","content":"Say hi"}],"max_tokens":10}' \
+        "$FULL_URL?key=$OPENAI_API_KEY" --max-time 10 2>&1)
+    echo "Response: $RESP2" | tee -a /tmp/api-test.log
+
+    echo "--- Test 3: DNS resolution ---" | tee -a /tmp/api-test.log
+    nslookup generativelanguage.googleapis.com 2>&1 | tee -a /tmp/api-test.log || true
+
     echo "=== End API Test ===" | tee -a /tmp/api-test.log
 fi
 
